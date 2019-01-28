@@ -13,7 +13,6 @@ def setLand():
     rospy.wait_for_service('/mavros/cmd/land')
     try:
         landService = rospy.ServiceProxy('/mavros/cmd/land', mavros_msgs.srv.CommandTOL)
-        #http://wiki.ros.org/mavros/CustomModes for custom modes
         isLanding = landService(altitude = 0, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
     except rospy.ServiceException, e:
         print "service land call failed: %s. The vehicle cannot land "%e
@@ -34,7 +33,6 @@ def setDisarm():
     except rospy.ServiceException, e:
         print "Service arm call failed: %s"%e
 
-
 def setTakeoff():
     rospy.wait_for_service('/mavros/cmd/takeoff')
     try:
@@ -42,9 +40,7 @@ def setTakeoff():
         # takeoffService(altitude = 5, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
         takeoffService(0, 0, 0, 0, 5)
     except rospy.ServiceException, e:
-        print "Service takeoff call failed: %s"%e
-    
-    
+        print "Service takeoff call failed: %s"%e    
 
 def globalPositionCallback(globalPositionCallback):
     global latitude
@@ -63,7 +59,7 @@ def menu():
     print "4: to set mode to LAND"
     print "x: to print GPS info"
     
-def myLoop():
+def userInput():
     x='1'
     while ((not rospy.is_shutdown())and (x in ['1','2','3','4','x'])):
         menu()
@@ -85,12 +81,9 @@ def myLoop():
             print ("altitude: %.7f" %altitude)
         else: 
             print "Exit"
-        
-        
-    
 
 if __name__ == '__main__':
     rospy.init_node('iris_node', anonymous=True)
     rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
 
-    myLoop()
+    userInput()
