@@ -1,0 +1,7 @@
+<launch>
+  <!-- Launch the initial world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find iris_sim)/worlds/initial.world"/>
+    <!-- more default parameters can be changed here -->
+  </include>
+</launch>
