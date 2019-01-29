@@ -37,7 +37,7 @@ roslaunch px4 mavros_posix_sitl.launch
 It will launch both SITL and MAVROS in ROS.
 
 ### Install MAVROS Package
-:bangbang: **In case of getting errors about missing dependencies, run `rosdep update` often.** :bangbang:
+:bangbang: **In case of getting errors about dependencies and building packages, run `rosdep update` and `sudo apt-get update` often.** :bangbang:
 
 Build the package with following commands:
 ```bash
