@@ -54,7 +54,7 @@ wstool update -t src -j4
 rosdep install --from-paths src --ignore-src -y
 
 # 4. Install GeographicLib datasets:
-./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
+sudo ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
 
 # 5. Build source
 catkin build

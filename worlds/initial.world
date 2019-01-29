@@ -697,10 +697,10 @@
       <pose frame=''>-20 -40 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>621 22000000</sim_time>
-      <real_time>295 977347496</real_time>
-      <wall_time>1548354125 466767841</wall_time>
-      <iterations>294315</iterations>
+      <sim_time>720 51000000</sim_time>
+      <real_time>99 649834719</real_time>
+      <wall_time>1548776790 557928904</wall_time>
+      <iterations>99029</iterations>
       <model name='apartment_0'>
         <pose frame=''>-26 -26 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -742,10 +742,10 @@
         </link>
       </model>
       <model name='apartment_4'>
-        <pose frame=''>2 0 0 0 -0 0</pose>
+        <pose frame=''>33 4 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>2 0 0 0 -0 0</pose>
+          <pose frame=''>33 4 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -802,10 +802,10 @@
         </link>
       </model>
       <model name='playground'>
-        <pose frame=''>27.5069 10.0797 0 0 -0 0</pose>
+        <pose frame=''>31.5069 23.0797 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>27.5069 10.0797 0 0 -0 0</pose>
+          <pose frame=''>31.5069 23.0797 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -822,10 +822,10 @@
         </link>
       </model>
       <model name='school'>
-        <pose frame=''>40 -26 0 0 0 -1.5708</pose>
+        <pose frame=''>36 -26 0 0 0 -1.5708</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>40 -26 0 0 0 -1.5708</pose>
+          <pose frame=''>36 -26 0 0 0 -1.5708</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -867,7 +867,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose frame=''>20.7412 -246.24 136.639 0 0.433798 1.5922</pose>
+        <pose frame=''>164.657 -172.232 232.485 -0 0.825798 2.2642</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
