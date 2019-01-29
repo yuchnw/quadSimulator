@@ -38,6 +38,7 @@ It will launch both SITL and MAVROS in ROS.
 
 ### Install MAVROS Package
 :bangbang: **In case of getting errors about missing dependencies, run `rosdep update` often.** :bangbang:
+
 Build the package with following commands:
 ```bash
 cd ~/catkin_ws
