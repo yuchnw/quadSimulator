@@ -18,8 +18,8 @@ class Node(object):
 
 class RRT(object):
 
-    def _init_(self,map):
-        self.map = map[:,:,:].astype(int).T
+    def _init_(self):
+        self.map = self.map[:,:,:].astype(int).T
         self.q_init = Node(2,2,-2.5)
         self.q_goal = Node(-2.5,2.5,2)
         self.delta_q = 0.1
@@ -126,7 +126,7 @@ class RRT(object):
             self.points.append(q_new)
             self.parent.append(q_near)
 
-# if __name__=="__main__":
-#     N_map = plt.imread("images/N_map.png")
-#     rrt = RRT(N_map)
-#     rrt.main()
+if __name__=="__main__":
+    # N_map = plt.imread("images/N_map.png")
+    rrt = RRT()
+    rrt.plot()
