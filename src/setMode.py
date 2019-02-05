@@ -29,10 +29,10 @@ def setDisarm():
         print "Service arm call failed: %s"%e
 
 def setTakeoff():
-    rospy.wait_for_service('/mavros/setpoint_position/local')
+    rospy.wait_for_service('/mavros/cmd/takeoff')
     try:
         takeoffService = rospy.ServiceProxy('/mavros/cmd/takeoff', mavros_msgs.srv.CommandTOL) 
-        takeoffService(altitude = 5, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
+        takeoffService(altitude = 540, latitude = 47.3977420, longitude = 8.5455936, min_pitch = 0, yaw = 0)
     except rospy.ServiceException, e:
         print "Service takeoff call failed: %s"%e
 
@@ -40,21 +40,33 @@ def setLand():
     rospy.wait_for_service('/mavros/cmd/land')
     try:
         landService = rospy.ServiceProxy('/mavros/cmd/land', mavros_msgs.srv.CommandTOL)
-        isLanding = landService(altitude = 0, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
+        landService(altitude = 0, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
     except rospy.ServiceException, e:
         print "service land call failed: %s. The vehicle cannot land "%e
 
 def setLocation():
-       goalPos = PoseStamped()
-       goalPos.pose.position.x = 0
-       goalPos.pose.position.y = 0
-       goalPos.pose.position.z = 15
-       goalPos.header.stamp = rospy.Time.now()
-       goalPos.header.frame_id = 'map'
+    locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
+    loop_rate = rospy.Rate(10)
+        
+    while not rospy.is_shutdown():
+        goalPos = PoseStamped()
+        goalPos.pose.position.x = 0
+        goalPos.pose.position.y = 0
+        goalPos.pose.position.z = 15
+        goalPos.header.stamp = rospy.Time.now()
+        goalPos.header.frame_id = 'base_link'
 
-    #    locPub.publish(goalPos)
+        locPub.publish(goalPos)
+        loop_rate.sleep()
 
 def move():
+    rospy.wait_for_service('/mavros/setpoint_position/local')
+    try:
+        takeoffService = rospy.ServiceProxy('/mavros/cmd/takeoff', mavros_msgs.srv.CommandTOL) 
+        takeoffService(altitude = 5, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
+    except rospy.ServiceException, e:
+        print "Service takeoff call failed: %s"%e
+        
     locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
     # locPub=SP.get_pub_position_local(queue_size=10)
     loop_rate = rospy.Rate(10)
@@ -88,11 +100,12 @@ def localPositionCallback(localPos):
     
 def userInput():
     enter ='1'
-    while ((not rospy.is_shutdown())and (enter in ['1','2','3','4','x'])):
+    while ((not rospy.is_shutdown())and (enter in ['1','2','3','4','5','x'])):
         print "1: Set mode to ARM"
         print "2: Set mode to DISARM"
         print "3: Set mode to TAKEOFF"
         print "4: Set mode to LAND"
+        print "5: Set mode to TARGET"
         print "x: Print GPS info"
         enter = raw_input("Enter your input: ")
         if (enter=='1'):
@@ -100,10 +113,11 @@ def userInput():
         elif(enter=='2'):
             setDisarm()
         elif(enter=='3'):
-            setLocation()
-            # setTakeoff()
+            setTakeoff()
         elif(enter=='4'):
             setLand()
+        elif(enter=='5'):
+            setLocation()
         elif(enter=='x'):
             global latitude
             global longitude
@@ -125,9 +139,8 @@ def userInput():
 
 if __name__ == '__main__':
     rospy.init_node('iris_node', anonymous=True)
-    # rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
-    # rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
-     
+    rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
+    rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
 
-    # userInput()
-    move()
+    userInput()
+    # move()

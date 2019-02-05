@@ -2,10 +2,12 @@
 
 import numpy as np
 import math
+import plotly
+import plotly.graph_objs as go
 
-X_RANGE = 100
-Y_RANGE = 100
-Z_RANGE = 100
+X_RANGE = 3
+Y_RANGE = 3
+Z_RANGE = 3
 
 class Node(object):
     
@@ -16,20 +18,17 @@ class Node(object):
 
 class RRT(object):
 
-    def _init_(self,map,x,y,z,q_init,q_goal,delta_q):
+    def _init_(self,map):
         self.map = map[:,:,:].astype(int).T
-        self.x = x
-        self.y = y
-        self.z = z
-        self.q_init = Node(10,10,0)
-        self.q_goal = Node(75,75,50)
-        self.delta_q = delta_q
+        self.q_init = Node(2,2,-2.5)
+        self.q_goal = Node(-2.5,2.5,2)
+        self.delta_q = 0.1
         self.points = []
         self.parent = []
         self.checkNum = 100
 
-        self.points.append(q_init)
-        self.parent.append(q_init)
+        self.points.append(self.q_init)
+        self.parent.append(self.q_init)
     
     def getNearest(self,point):
         minDistance = self.getDistance(point,self.points[0])
@@ -85,13 +84,49 @@ class RRT(object):
             return True
         return False
 
+    def plot(self):
+        x, y, z = np.random.multivariate_normal(np.array([0,0,0]), np.eye(3), 200).transpose()
+        trace1 = go.Scatter3d(
+            x=x,
+            y=y,
+            z=z,
+            mode='markers',
+            marker=dict(
+                size=12,
+                line=dict(
+                    color='rgba(217, 217, 217, 0.14)',
+                    width=0.5
+                ),
+                opacity=0.8
+            )
+        )
+        data = [trace1]
+        layout = go.Layout(
+            margin=dict(
+                l=0,
+                r=0,
+                b=0,
+                t=0
+            )
+        )
+        fig = go.Figure(data=data, layout=layout)
+        plotly.offline.plot(fig, filename='3d_obstacle.html',auto_open=True)
+
     def main(self):
         while True:
-            q_rand = Node(np.random.randint(0,X_RANGE),np.random.randint(0,Y_RANGE),np.random.randint(0,Z_RANGE))
+            q_rand = Node(np.random.randint(-X_RANGE,X_RANGE),np.random.randint(-Y_RANGE,Y_RANGE),np.random.randint(-Z_RANGE,Z_RANGE))
             q_near = self.getNearest(q_rand)
             q_new = self.getNew(q_rand,q_near)
-            if self.check_line(q_near,q_new):
-                self.points.append(q_new)
-                self.parent.append(q_near)
+            if self.check_done(q_new):
+                break
+            if not self.check_line(q_near,q_new):
                 continue
-        return 0
+            if self.check_obstacle(q_new):
+                continue
+            self.points.append(q_new)
+            self.parent.append(q_near)
+
+# if __name__=="__main__":
+#     N_map = plt.imread("images/N_map.png")
+#     rrt = RRT(N_map)
+#     rrt.main()
