@@ -85,14 +85,15 @@ class RRT(object):
         return False
 
     def plot(self):
-        x, y, z = np.random.multivariate_normal(np.array([0,0,0]), np.eye(3), 200).transpose()
+        plotly.tools.set_credentials_file(username='yuchnw', api_key='U4zDLjU3ftIprgEzyXTz')
+        x, y, z = np.random.multivariate_normal(np.array([0,0,0]), np.eye(3), 100).transpose()
         trace1 = go.Scatter3d(
             x=x,
             y=y,
             z=z,
             mode='markers',
             marker=dict(
-                size=12,
+                size=20,
                 line=dict(
                     color='rgba(217, 217, 217, 0.14)',
                     width=0.5
@@ -110,7 +111,7 @@ class RRT(object):
             )
         )
         fig = go.Figure(data=data, layout=layout)
-        plotly.offline.plot(fig, filename='3d_obstacle.html',auto_open=True)
+        plotly.plotly.plot(fig, filename='3d_obstacle',auto_open=True)
 
     def main(self):
         while True:
