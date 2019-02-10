@@ -24,7 +24,8 @@ ROS can be used with PX4 and the Gazebo simulator. As the picture below indicate
 ### RRT
 `rrt.py` is to generate the 3D obstacle-free path for the quad using RRT algorithm.
 
-[Here](https://plot.ly/~yuchnw/2.embed) is the picture of a sample 3D obstacle map generated using Plotly library (the path hasn't been ploted yet). The future step is to parse the Gazebo world into a 3D map.
+[Here](https://plot.ly/~yuchnw/2/#/) is the link to the 3D RRT path planning result generated using Plotly library. The future step is to parse the Gazebo world into a 3D map and apply this algorithm.
+![RRT](img/rrt.png)
 
 ### Pilot
 `setMode.py` is to control the flying mode of the quad. For now it can **arm**, **disarm**, **takeoff**, **land** the quadcopter and return its geographic coordinates.
