@@ -18,16 +18,17 @@ class Node(object):
         self.x = x
         self.y = y
         self.z = z
+        self.parent = None
 
 class RRT(object):
 
     def __init__(self):
         self.q_init = Node(0,99,0)
         self.q_goal = Node(50,0,50)
-        self.delta_q = 10
+        self.delta_q = 3.0
         self.points = []
         self.parent = []
-        self.checkNum = 1
+        self.checkNum = 0.5
         self.Obstacles = np.array(
         [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
         (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
@@ -51,7 +52,6 @@ class RRT(object):
         new_X = near.x + scale*(rand.x-near.x)
         new_Y = near.y + scale*(rand.y-near.y)
         new_Z = near.z + scale*(rand.z-near.z)
-        print(scale)
         new = self.check_boundary(Node(new_X,new_Y,new_Z))
         return new
 
@@ -76,6 +76,7 @@ class RRT(object):
         return point
 
     def check_line(self,p1,p2):
+        # Return true if line NOT intersect with obstacle, otherwise false.
         count = math.sqrt(self.getDistance(p1,p2))/self.checkNum
         dx = (p2.x-p1.x)/count
         dy = (p2.y-p1.y)/count
@@ -110,15 +111,24 @@ class RRT(object):
             z=[0,50],
             mode='markers',
             marker=dict(
-                size=20,
-                line=dict(
-                    color='rgba(217, 217, 217, 0.14)',
-                    width=10
-                ),
-                opacity=0.8
+                size = 10,
+                color = 'red',
+                opacity = 1
             )
         )
         data = [trace1]
+        for k in range(len(self.points)):
+            trace = go.Scatter3d(
+                x = [self.points[k].x,self.parent[k].x],
+                y = [self.points[k].y,self.parent[k].y],
+                z = [self.points[k].z,self.parent[k].z],
+                mode = 'lines',
+                line = dict(
+                    color='black',
+                    width = 5
+                )
+            )
+            data.append(trace)
         Obstacles = np.array(
         [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
         (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
@@ -140,30 +150,36 @@ class RRT(object):
                 r=0,
                 b=0,
                 t=0
-            )
+            ),
+            showlegend = False
         )
-        fig = go.Figure(data=data, layout=layout)
+        fig = go.Figure(data=data,layout=layout)
         plotly.plotly.plot(fig, filename='3d_cube',auto_open=True)
 
     def main(self):
+        # for i in range(100):
         while True:
             q_rand = Node(np.random.uniform(0,X_RANGE),np.random.uniform(0,Y_RANGE),np.random.uniform(0,Z_RANGE))
             q_near = self.getNearest(q_rand)
-            # print(q_near.x,q_near.y,q_near.z)
             q_new = self.getNew(q_rand,q_near)
-            # print(q_new.x,q_new.y,q_new.z)
-            if 0.1 and random.random() < 0.1:
-                if self.check_done(q_new):
-                    print(len(self.points))
-                    return self.points 
+            if self.check_line(q_new,self.q_goal):
+                self.points.append(q_new)
+                self.parent.append(q_near)
+                self.points.append(self.q_goal)
+                self.q_goal.parent = q_new
+                self.parent.append(q_new)
+                break
             if not self.check_line(q_near,q_new):
                 continue
-            if self.check_obstacle(q_new):
+            if not self.check_obstacle(q_new):
+                # print("!")
                 continue
+            q_new.parent = q_near
             self.points.append(q_new)
             self.parent.append(q_near)
+            # i=i+1
         print(len(self.points))
-        # self.plot()
+        self.plot()
 
 if __name__=="__main__":
     rrt = RRT()
