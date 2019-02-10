@@ -8,10 +8,6 @@ import plotly.graph_objs as go
 import uuid
 from rtree import index
 
-X_RANGE = 100
-Y_RANGE = 100
-Z_RANGE = 100
-
 class Node(object):
     
     def __init__(self,x,y,z):
@@ -22,21 +18,23 @@ class Node(object):
 
 class RRT(object):
 
-    def __init__(self):
-        self.q_init = Node(0,99,0)
-        self.q_goal = Node(50,0,50)
+    def __init__(self,obstacle,q_init,q_goal,xrange,yrange,zrange):
+        self.q_init = q_init
+        self.q_goal = q_goal
         self.delta_q = 3.0
         self.points = []
         self.parent = []
-        self.checkNum = 0.5
-        self.Obstacles = np.array(
-        [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
-        (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
+        self.path = []
+        self.checkNum = 0.1
+        self.Obstacles = obstacle
         p = index.Property()
         p.dimension = 3
         self.obs = index.Index(self.getObstacle(), interleaved=True, properties=p)
         self.points.append(self.q_init)
         self.parent.append(self.q_init)
+        self.X_RANGE = xrange
+        self.Y_RANGE = yrange
+        self.Z_RANGE = zrange
     
     def getNearest(self,point):
         minDistance = self.getDistance(point,self.points[0])
@@ -67,12 +65,12 @@ class RRT(object):
         return distance
 
     def check_boundary(self,point):
-        if point.x > X_RANGE:
-            point.x = X_RANGE
-        if point.y > Y_RANGE:
-            point.y = Y_RANGE
-        if point.z > Z_RANGE:
-            point.z = Z_RANGE
+        if point.x > self.X_RANGE:
+            point.x = self.X_RANGE
+        if point.y > self.Y_RANGE:
+            point.y = self.Y_RANGE
+        if point.z > self.Z_RANGE:
+            point.z = self.Z_RANGE
         return point
 
     def check_line(self,p1,p2):
@@ -100,15 +98,19 @@ class RRT(object):
         for obs in self.Obstacles:
             yield (uuid.uuid4(), obs, obs)
 
-    def getMap(self,obs):
-        return
+    def getPath(self):
+        self.path.append(self.q_goal)
+        while(self.parent[self.points.index(self.path[-1])]!=self.q_init):
+            self.path.append(self.parent[self.points.index(self.path[-1])])
+        self.path.append(self.q_init)
+        return self.path
 
     def plot(self):
         plotly.tools.set_credentials_file(username='yuchnw', api_key='U4zDLjU3ftIprgEzyXTz')
         trace1 = go.Scatter3d(
-            x=[0,50],
-            y=[99,0],
-            z=[0,50],
+            x=[self.q_init.x,self.q_goal.x],
+            y=[self.q_init.y,self.q_goal.y],
+            z=[self.q_init.z,self.q_goal.z],
             mode='markers',
             marker=dict(
                 size = 10,
@@ -129,14 +131,23 @@ class RRT(object):
                 )
             )
             data.append(trace)
-        Obstacles = np.array(
-        [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
-        (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
-        for O_i in Obstacles:
+        for j in range(len(self.path)-1):
+            path = go.Scatter3d(
+                x = [self.path[j].x,self.path[j+1].x],
+                y = [self.path[j].y,self.path[j+1].y],
+                z = [self.path[j].z,self.path[j+1].z],
+                mode = 'lines',
+                line = dict(
+                    color='green',
+                    width = 5
+                )
+            )
+            data.append(path)
+        for O in self.Obstacles:
             obs = go.Mesh3d(
-                x=[O_i[0], O_i[0], O_i[3], O_i[3], O_i[0], O_i[0], O_i[3], O_i[3]],
-                y=[O_i[1], O_i[4], O_i[4], O_i[1], O_i[1], O_i[4], O_i[4], O_i[1]],
-                z=[O_i[2], O_i[2], O_i[2], O_i[2], O_i[5], O_i[5], O_i[5], O_i[5]],
+                x=[O[0], O[0], O[3], O[3], O[0], O[0], O[3], O[3]],
+                y=[O[1], O[4], O[4], O[1], O[1], O[4], O[4], O[1]],
+                z=[O[2], O[2], O[2], O[2], O[5], O[5], O[5], O[5]],
                 i=[7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
                 j=[3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
                 k=[0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
@@ -154,12 +165,11 @@ class RRT(object):
             showlegend = False
         )
         fig = go.Figure(data=data,layout=layout)
-        plotly.plotly.plot(fig, filename='3d_cube',auto_open=True)
+        plotly.plotly.plot(fig, filename='gazebo_map',auto_open=True)
 
     def main(self):
-        # for i in range(100):
         while True:
-            q_rand = Node(np.random.uniform(0,X_RANGE),np.random.uniform(0,Y_RANGE),np.random.uniform(0,Z_RANGE))
+            q_rand = Node(np.random.uniform(-self.X_RANGE,self.X_RANGE),np.random.uniform(-self.Y_RANGE,self.Y_RANGE),np.random.uniform(0,self.Z_RANGE))
             q_near = self.getNearest(q_rand)
             q_new = self.getNew(q_rand,q_near)
             if self.check_line(q_new,self.q_goal):
@@ -172,15 +182,11 @@ class RRT(object):
             if not self.check_line(q_near,q_new):
                 continue
             if not self.check_obstacle(q_new):
-                # print("!")
                 continue
             q_new.parent = q_near
             self.points.append(q_new)
             self.parent.append(q_near)
-            # i=i+1
         print(len(self.points))
+        self.getPath()
+        print(len(self.path))
         self.plot()
-
-if __name__=="__main__":
-    rrt = RRT()
-    rrt.main()
