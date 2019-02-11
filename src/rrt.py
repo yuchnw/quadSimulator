@@ -20,10 +20,10 @@ class RRT(object):
 
     def __init__(self,obstacle,q_init,q_goal,xrange,yrange,zrange):
         self.q_init = q_init
+        self.q_init.parent = None
         self.q_goal = q_goal
         self.delta_q = 3.0
         self.points = []
-        self.parent = []
         self.path = []
         self.checkNum = 0.1
         self.Obstacles = obstacle
@@ -31,7 +31,6 @@ class RRT(object):
         p.dimension = 3
         self.obs = index.Index(self.getObstacle(), interleaved=True, properties=p)
         self.points.append(self.q_init)
-        self.parent.append(self.q_init)
         self.X_RANGE = xrange
         self.Y_RANGE = yrange
         self.Z_RANGE = zrange
@@ -89,7 +88,7 @@ class RRT(object):
     def check_done(self,point):
         if self.check_line(point,self.q_goal) == True:
             self.points.append(self.q_goal)
-            self.parent.append(point)
+            self.q_goal.parent = point
             return True
         else:
             return False
@@ -100,8 +99,8 @@ class RRT(object):
 
     def getPath(self):
         self.path.append(self.q_goal)
-        while(self.parent[self.points.index(self.path[-1])]!=self.q_init):
-            self.path.append(self.parent[self.points.index(self.path[-1])])
+        while(self.path[-1].parent!=self.q_init):
+            self.path.append(self.path[-1].parent)
         self.path.append(self.q_init)
         return self.path
 
@@ -119,11 +118,11 @@ class RRT(object):
             )
         )
         data = [trace1]
-        for k in range(len(self.points)):
+        for k in range(len(self.points)-1):
             trace = go.Scatter3d(
-                x = [self.points[k].x,self.parent[k].x],
-                y = [self.points[k].y,self.parent[k].y],
-                z = [self.points[k].z,self.parent[k].z],
+                x = [self.points[k+1].x,self.points[k+1].parent.x],
+                y = [self.points[k+1].y,self.points[k+1].parent.y],
+                z = [self.points[k+1].z,self.points[k+1].parent.z],
                 mode = 'lines',
                 line = dict(
                     color='black',
@@ -174,10 +173,9 @@ class RRT(object):
             q_new = self.getNew(q_rand,q_near)
             if self.check_line(q_new,self.q_goal):
                 self.points.append(q_new)
-                self.parent.append(q_near)
+                q_new.parent = q_near
                 self.points.append(self.q_goal)
                 self.q_goal.parent = q_new
-                self.parent.append(q_new)
                 break
             if not self.check_line(q_near,q_new):
                 continue
@@ -185,8 +183,8 @@ class RRT(object):
                 continue
             q_new.parent = q_near
             self.points.append(q_new)
-            self.parent.append(q_near)
         print(len(self.points))
         self.getPath()
         print(len(self.path))
         self.plot()
+        return self.path

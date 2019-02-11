@@ -36,6 +36,10 @@ The future step is to parse a more complicated Gazebo world into a 3D map and ap
 
 *Curretnly there is some issue with setting target position and I am working on that.*
 
+## Important Point
+### Offboard Mode Setup
+The flight controller needs a stream of setpoint messages before the commander accepts offboard mode. Make sure the flight controller gets a stream of setpoints (0.5s timeout) before you switch to offboard mode. The system will reject offboard otherwise.
+
 ## Installation
 ### Prerequisite
 The system should have ROS(*Indigo, Kinetic, Lunar or Melodic*), relative workspace and Gazebo(*8 or later*) installed.

@@ -50,14 +50,23 @@ def setLocation():
         
     while not rospy.is_shutdown():
         goalPos = PoseStamped()
-        goalPos.pose.position.x = 0
-        goalPos.pose.position.y = 0
-        goalPos.pose.position.z = 15
+        goalPos.pose.position.x = 5
+        goalPos.pose.position.y = 5
+        goalPos.pose.position.z = 10
         goalPos.header.stamp = rospy.Time.now()
         goalPos.header.frame_id = 'base_link'
 
         locPub.publish(goalPos)
+        setOffboard()
         loop_rate.sleep()
+
+def setOffboard():
+    rospy.wait_for_service('/mavros/set_mode')
+    try:
+        landService = rospy.ServiceProxy('/mavros/set_mode', mavros_msgs.srv.SetMode)
+        landService(custom_mode = "OFFBOARD")
+    except rospy.ServiceException, e:
+        print "service switch to offboard call failed: %s. The vehicle cannot land "%e
 
 def move():
     rospy.wait_for_service('/mavros/setpoint_position/local')

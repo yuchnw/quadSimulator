@@ -22,13 +22,6 @@ Obstacle = np.array(
         [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
         (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
 
-# xRange = 100
-# yRange = 100
-# zRange = 100
-
-# q_init = Node(0,99,0)
-# q_goal = Node(99,0,99)
-
 xRange = 50
 yRange = 50
 zRange = 80
@@ -37,6 +30,4 @@ q_init = Node(-30,30,1)
 q_goal = Node(50,-50,30)
 
 rrt_path = RRT(obstacle,q_init,q_goal,xRange,yRange,zRange)
-rrt_path.main()
-
-# print(obstacle)
+path = rrt_path.main()
