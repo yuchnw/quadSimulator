@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import rospy
 import time
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import PoseStamped,PoseWithCovarianceStamped
 from mavros_msgs.srv import *
 from mavros_msgs.msg import *
+# from iris_sim.msg import Progress
 
 #global variable
 latitude = 0.0
@@ -46,8 +47,8 @@ def setLand():
 
 def setLocation():
     locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
-    loop_rate = rospy.Rate(10)
-    global x,y,z
+    loop_rate = rospy.Rate(50)
+    global x,y,z,path_length
     while not rospy.is_shutdown():
         goalPos = PoseStamped()
         goalPos.pose.position.x = 5
@@ -60,7 +61,7 @@ def setLocation():
         setOffboard()
 
         if abs(x-goalPos.pose.position.x)<0.1 and abs(y-goalPos.pose.position.y)<0.1 and abs(z-goalPos.pose.position.z)<0.1:
-            print "Arrive point"
+            print "Reach target"
             break
         loop_rate.sleep()
 
@@ -88,13 +89,17 @@ def localPositionCallback(localPos):
     y = localPos.pose.position.y
     z = localPos.pose.position.z
 
-def currentPositionCallback(currentPos):
-    global current_x
-    global current_y
-    global current_z
-    current_x = currentPos.pose.pose.position.x
-    current_y = currentPos.pose.pose.position.y
-    current_z = currentPos.pose.pose.position.z
+# def currentPositionCallback(currentPos):
+#     global current_x
+#     global current_y
+#     global current_z
+#     current_x = currentPos.pose.pose.position.x
+#     current_y = currentPos.pose.pose.position.y
+#     current_z = currentPos.pose.pose.position.z
+
+def pathCallback(path):
+    global path_length
+    path_length = path
     
 def userInput():
     enter ='1'
@@ -140,7 +145,8 @@ if __name__ == '__main__':
     rospy.init_node('iris_node', anonymous=True)
     rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
-    rospy.Subscriber("/mavros/global_position/local", PoseWithCovarianceStamped, currentPositionCallback)
+    # rospy.Subscriber("/mavros/global_position/local", PoseWithCovarianceStamped, currentPositionCallback)
+    rospy.Subscriber("/iris/path_length", Int32, pathCallback)
 
     userInput()
     # move()

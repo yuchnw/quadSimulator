@@ -2,6 +2,10 @@
 
 import numpy as np
 from rrt import RRT, Node
+import rospy
+from std_msgs.msg import Int32,Bool
+from geometry_msgs.msg import PoseStamped
+# from iris_sim.msg import Progress
 
 # Parse Gazebo world into RTree map
 # Obs1: (-23,23), 6.8x5.4x14
@@ -31,3 +35,30 @@ q_goal = Node(50,-50,30)
 
 rrt_path = RRT(obstacle,q_init,q_goal,xRange,yRange,zRange)
 path = rrt_path.main()
+
+def sendPath():
+        path_publisher = rospy.Publisher('/iris/path_length', Int32, queue_size=10)
+        loop_rate = rospy.Rate(50)
+        while not rospy.is_shutdown():
+                path_publisher.publish(len(path))
+                loop_rate.sleep()
+
+def sendPoint():
+        point_publisher = rospy.Publisher('/iris/next_point', PoseStamped, queue_size=10)
+        loop_rate = rospy.Rate(50)
+        while not rospy.is_shutdown():
+                goalPos = PoseStamped()
+                goalPos.pose.position.x = 5
+                goalPos.pose.position.y = 5
+                goalPos.pose.position.z = 10
+                goalPos.header.stamp = rospy.Time.now()
+                goalPos.header.frame_id = 'base_link'
+
+
+def reachCallback(reach):
+        return reach
+
+if __name__ == '__main__':
+	rospy.init_node('sendpath_node',anonymous=True)
+        rospy.Subscriber("/iris/reach_point", Bool, reachCallback)
+        sendPath()

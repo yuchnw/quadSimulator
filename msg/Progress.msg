@@ -1,0 +1,2 @@
+int32 total_length
+int32 current_order
