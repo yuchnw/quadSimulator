@@ -3,7 +3,7 @@ import rospy
 import time
 from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped,PoseWithCovarianceStamped
 from mavros_msgs.srv import *
 from mavros_msgs.msg import *
 
@@ -47,7 +47,7 @@ def setLand():
 def setLocation():
     locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
     loop_rate = rospy.Rate(10)
-        
+    global x,y,z
     while not rospy.is_shutdown():
         goalPos = PoseStamped()
         goalPos.pose.position.x = 5
@@ -58,6 +58,10 @@ def setLocation():
 
         locPub.publish(goalPos)
         setOffboard()
+
+        if abs(x-goalPos.pose.position.x)<0.1 and abs(y-goalPos.pose.position.y)<0.1 and abs(z-goalPos.pose.position.z)<0.1:
+            print "Arrive point"
+            break
         loop_rate.sleep()
 
 def setOffboard():
@@ -67,29 +71,6 @@ def setOffboard():
         landService(custom_mode = "OFFBOARD")
     except rospy.ServiceException, e:
         print "service switch to offboard call failed: %s. The vehicle cannot land "%e
-
-def move():
-    rospy.wait_for_service('/mavros/setpoint_position/local')
-    try:
-        takeoffService = rospy.ServiceProxy('/mavros/cmd/takeoff', mavros_msgs.srv.CommandTOL) 
-        takeoffService(altitude = 5, latitude = 0, longitude = 0, min_pitch = 0, yaw = 0)
-    except rospy.ServiceException, e:
-        print "Service takeoff call failed: %s"%e
-        
-    locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
-    # locPub=SP.get_pub_position_local(queue_size=10)
-    loop_rate = rospy.Rate(10)
-    
-    while not rospy.is_shutdown():
-        goalPos = PoseStamped()
-        goalPos.pose.position.x = 0
-        goalPos.pose.position.y = 0
-        goalPos.pose.position.z = 15
-        goalPos.header.stamp = rospy.Time.now()
-        goalPos.header.frame_id = 'base_link'
-
-        locPub.publish(goalPos)
-        loop_rate.sleep()
 
 def globalPositionCallback(globalPos):
     global latitude
@@ -106,16 +87,25 @@ def localPositionCallback(localPos):
     x = localPos.pose.position.x
     y = localPos.pose.position.y
     z = localPos.pose.position.z
+
+def currentPositionCallback(currentPos):
+    global current_x
+    global current_y
+    global current_z
+    current_x = currentPos.pose.pose.position.x
+    current_y = currentPos.pose.pose.position.y
+    current_z = currentPos.pose.pose.position.z
     
 def userInput():
     enter ='1'
-    while ((not rospy.is_shutdown())and (enter in ['1','2','3','4','5','x'])):
+    while (not rospy.is_shutdown()):
         print "1: Set mode to ARM"
         print "2: Set mode to DISARM"
         print "3: Set mode to TAKEOFF"
         print "4: Set mode to LAND"
         print "5: Set mode to TARGET"
         print "x: Print GPS info"
+        print "c: Exit"
         enter = raw_input("Enter your input: ")
         if (enter=='1'):
             setArm()
@@ -150,6 +140,7 @@ if __name__ == '__main__':
     rospy.init_node('iris_node', anonymous=True)
     rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
+    rospy.Subscriber("/mavros/global_position/local", PoseWithCovarianceStamped, currentPositionCallback)
 
     userInput()
     # move()
