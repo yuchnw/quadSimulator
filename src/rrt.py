@@ -22,7 +22,7 @@ class RRT(object):
         self.q_init = q_init
         self.q_init.parent = None
         self.q_goal = q_goal
-        self.delta_q = 3.0
+        self.delta_q = 8.0
         self.points = []
         self.path = []
         self.checkNum = 0.1
@@ -164,7 +164,7 @@ class RRT(object):
             showlegend = False
         )
         fig = go.Figure(data=data,layout=layout)
-        plotly.plotly.plot(fig, filename='gazebo_map',auto_open=True)
+        plotly.plotly.plot(fig, filename='real_gazebo_map',auto_open=True)
 
     def main(self):
         while True:
@@ -186,5 +186,5 @@ class RRT(object):
         print(len(self.points))
         self.getPath()
         print(len(self.path))
-        self.plot()
+        # self.plot()
         return self.path

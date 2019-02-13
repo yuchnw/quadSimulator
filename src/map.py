@@ -5,7 +5,7 @@ from rrt import RRT, Node
 import rospy
 from std_msgs.msg import Int32,Bool
 from geometry_msgs.msg import PoseStamped
-# from iris_sim.msg import Progress
+from iris_sim.msg import Progress
 
 # Parse Gazebo world into RTree map
 # Obs1: (-23,23), 6.8x5.4x14
@@ -30,35 +30,58 @@ xRange = 50
 yRange = 50
 zRange = 80
 
-q_init = Node(-30,30,1)
-q_goal = Node(50,-50,30)
+q_init = Node(0,0,0)
+q_goal = Node(-30,30,1)
 
 rrt_path = RRT(obstacle,q_init,q_goal,xRange,yRange,zRange)
 path = rrt_path.main()
 
-def sendPath():
-        path_publisher = rospy.Publisher('/iris/path_length', Int32, queue_size=10)
-        loop_rate = rospy.Rate(50)
-        while not rospy.is_shutdown():
-                path_publisher.publish(len(path))
-                loop_rate.sleep()
+path.reverse()
+
+current = 1
+global reach 
+reach = False
+
+# def sendPath():
+#         path_publisher = rospy.Publisher('/iris/path_length', Int32, queue_size=10)
+#         loop_rate = rospy.Rate(50)
+#         while not rospy.is_shutdown():
+#                 path_publisher.publish(len(path)-1)
+#                 loop_rate.sleep()
 
 def sendPoint():
+        global reach, current
         point_publisher = rospy.Publisher('/iris/next_point', PoseStamped, queue_size=10)
+        progress_publisher = rospy.Publisher('/iris/progress', Progress, queue_size=10)
         loop_rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-                goalPos = PoseStamped()
-                goalPos.pose.position.x = 5
-                goalPos.pose.position.y = 5
-                goalPos.pose.position.z = 10
-                goalPos.header.stamp = rospy.Time.now()
-                goalPos.header.frame_id = 'base_link'
+                nextPos = PoseStamped()
+                currentProgress = Progress()
 
+                nextPos.pose.position.x = path[current].x
+                nextPos.pose.position.y = path[current].y
+                nextPos.pose.position.z = path[current].z
+                nextPos.header.stamp = rospy.Time.now()
+                nextPos.header.frame_id = 'base_link'
 
-def reachCallback(reach):
-        return reach
+                currentProgress.total_length = len(path)-1
+                currentProgress.current_order = current
+
+                point_publisher.publish(nextPos)
+                progress_publisher.publish(currentProgress)
+
+                print(reach)
+
+                if(reach):
+                        print("move to next point")
+                        current = current + 1
+                loop_rate.sleep()
+
+def reachCallback(reachPoint):
+        global reach
+        reach = reachPoint
 
 if __name__ == '__main__':
 	rospy.init_node('sendpath_node',anonymous=True)
         rospy.Subscriber("/iris/reach_point", Bool, reachCallback)
-        sendPath()
+        sendPoint()

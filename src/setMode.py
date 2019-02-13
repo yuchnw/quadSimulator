@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import rospy
 import time
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Int32, Bool
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import PoseStamped,PoseWithCovarianceStamped
 from mavros_msgs.srv import *
 from mavros_msgs.msg import *
-# from iris_sim.msg import Progress
+from iris_sim.msg import Progress
 
 #global variable
 latitude = 0.0
@@ -47,22 +47,28 @@ def setLand():
 
 def setLocation():
     locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
-    loop_rate = rospy.Rate(50)
-    global x,y,z,path_length
+    reachPub = rospy.Publisher('/iris/reach_point',Bool,queue_size=10)
+    reachFlag = False
+    loop_rate = rospy.Rate(30)
+    global x,y,z,path_length,next_x,next_y,next_z
     while not rospy.is_shutdown():
         goalPos = PoseStamped()
-        goalPos.pose.position.x = 5
-        goalPos.pose.position.y = 5
-        goalPos.pose.position.z = 10
+        goalPos.pose.position.x = next_x
+        goalPos.pose.position.y = next_y
+        goalPos.pose.position.z = next_z
         goalPos.header.stamp = rospy.Time.now()
         goalPos.header.frame_id = 'base_link'
 
         locPub.publish(goalPos)
         setOffboard()
 
-        if abs(x-goalPos.pose.position.x)<0.1 and abs(y-goalPos.pose.position.y)<0.1 and abs(z-goalPos.pose.position.z)<0.1:
+        if abs(x-goalPos.pose.position.x)<0.2 and abs(y-goalPos.pose.position.y)<0.2 and abs(z-goalPos.pose.position.z)<0.2:
             print "Reach target"
-            break
+            reachFlag = True
+        else:
+            reachFlag = False
+        
+        reachPub.publish(reachFlag)
         loop_rate.sleep()
 
 def setOffboard():
@@ -89,13 +95,13 @@ def localPositionCallback(localPos):
     y = localPos.pose.position.y
     z = localPos.pose.position.z
 
-# def currentPositionCallback(currentPos):
-#     global current_x
-#     global current_y
-#     global current_z
-#     current_x = currentPos.pose.pose.position.x
-#     current_y = currentPos.pose.pose.position.y
-#     current_z = currentPos.pose.pose.position.z
+def nextPointCallback(nextPoint):
+    global next_x
+    global next_y
+    global next_z
+    next_x = nextPoint.pose.position.x
+    next_y = nextPoint.pose.position.y
+    next_z = nextPoint.pose.position.z
 
 def pathCallback(path):
     global path_length
@@ -145,7 +151,7 @@ if __name__ == '__main__':
     rospy.init_node('iris_node', anonymous=True)
     rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
-    # rospy.Subscriber("/mavros/global_position/local", PoseWithCovarianceStamped, currentPositionCallback)
+    rospy.Subscriber("/iris/next_point", PoseStamped, nextPointCallback)
     rospy.Subscriber("/iris/path_length", Int32, pathCallback)
 
     userInput()
