@@ -6,12 +6,15 @@ from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import PoseStamped,PoseWithCovarianceStamped
 from mavros_msgs.srv import *
 from mavros_msgs.msg import *
-from iris_sim.msg import Progress
+from iris_sim.msg import Progress, Feedback
 
 #global variable
 latitude = 0.0
 longitude = 0.0
 altitude = 0.0
+
+current_order = 1
+reachFlag = 0
           
 def setArm():
     rospy.wait_for_service('/mavros/cmd/arming')
@@ -47,28 +50,44 @@ def setLand():
 
 def setLocation():
     locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
-    reachPub = rospy.Publisher('/iris/reach_point',Bool,queue_size=10)
-    reachFlag = False
+    feedbackPub = rospy.Publisher('/iris/feedback',Feedback,queue_size=10)
     loop_rate = rospy.Rate(30)
-    global x,y,z,path_length,next_x,next_y,next_z
+    global x,y,z,next_x,next_y,next_z
+    global path_length,current_order,map_current,reachFlag
     while not rospy.is_shutdown():
+
+        if path_length + 1 == current_order:
+            print "reach goal"
+            setLand()
+            break
+
         goalPos = PoseStamped()
+        feedback = Feedback()
+
         goalPos.pose.position.x = next_x
         goalPos.pose.position.y = next_y
         goalPos.pose.position.z = next_z
         goalPos.header.stamp = rospy.Time.now()
         goalPos.header.frame_id = 'base_link'
 
+        feedback.quad_current = current_order
+        feedback.reach_current = reachFlag
+
         locPub.publish(goalPos)
         setOffboard()
 
         if abs(x-goalPos.pose.position.x)<0.2 and abs(y-goalPos.pose.position.y)<0.2 and abs(z-goalPos.pose.position.z)<0.2:
+            # map_current==current_order and
             print "Reach target"
-            reachFlag = True
+            if reachFlag == 0:
+                current_order = current_order + 1
+                reachFlag = 1
+            reachFlag = 1
+        # elif  abs(x-goalPos.pose.position.x)>=0.2 or abs(y-goalPos.pose.position.y)>=0.2 or abs(z-goalPos.pose.position.z)>=0.2:
         else:
-            reachFlag = False
+            reachFlag = 0
         
-        reachPub.publish(reachFlag)
+        feedbackPub.publish(feedback)
         loop_rate.sleep()
 
 def setOffboard():
@@ -103,9 +122,10 @@ def nextPointCallback(nextPoint):
     next_y = nextPoint.pose.position.y
     next_z = nextPoint.pose.position.z
 
-def pathCallback(path):
-    global path_length
-    path_length = path
+def progressCallback(progress):
+    global map_current,path_length
+    map_current = progress.map_current
+    path_length = progress.total_length
     
 def userInput():
     enter ='1'
@@ -152,7 +172,7 @@ if __name__ == '__main__':
     rospy.Subscriber("/mavros/global_position/raw/fix", NavSatFix, globalPositionCallback)
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
     rospy.Subscriber("/iris/next_point", PoseStamped, nextPointCallback)
-    rospy.Subscriber("/iris/path_length", Int32, pathCallback)
+    rospy.Subscriber("/iris/progress", Progress, progressCallback)
 
     userInput()
     # move()

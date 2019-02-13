@@ -1,0 +1,2 @@
+int32 quad_current
+int32 reach_current

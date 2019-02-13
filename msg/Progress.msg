@@ -1,2 +1,2 @@
 int32 total_length
-int32 current_order
+int32 map_current
