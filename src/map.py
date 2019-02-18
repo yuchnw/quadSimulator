@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+import random
 from rrt import RRT, Node
 import rospy
 from std_msgs.msg import Int32,Bool
@@ -14,24 +15,28 @@ from iris_sim.msg import Progress,Feedback
 # Obs4: (-35,-6), 10x3x2
 # Obs5: (40,-40), 10x10x50
 
-o1 = np.array([(-27,20,0,-19,26,14)])
-o2 = np.array([(-12.5,22,0,12.5,32,6)])
-o3 = np.array([(-42.5,2.5,0,-17.5,17.5,6)])
-o4 = np.array([(-40,-7.5,0,-30,-4.5,2)])
-o5 = np.array([(35,-45,0,45,-35,50)])
+# o1 = np.array([(-27,20,0,-19,26,14)])
+# o2 = np.array([(-12.5,22,0,12.5,32,6)])
+# o3 = np.array([(-42.5,2.5,0,-17.5,17.5,6)])
+# o4 = np.array([(-40,-7.5,0,-30,-4.5,2)])
+# o5 = np.array([(35,-45,0,45,-35,50)])
 
-obstacle = np.concatenate((o1,o2,o3,o4,o5))
+pp = []
 
-Obstacle = np.array(
-        [(20, 20, 20, 40, 40, 40), (20, 20, 60, 40, 40, 80), (20, 60, 20, 40, 80, 40), (60, 60, 20, 80, 80, 40),
-        (60, 20, 20, 80, 40, 40), (60, 20, 60, 80, 40, 80), (20, 60, 60, 40, 80, 80), (60, 60, 60, 80, 80, 80)])
+for i in range(8):
+        for j in range(8):
+                pp.append([-40+10*i,-40+10*j,0,-35+10*i,-35+10*j,random.randint(10,20)])
+
+# obstacle = np.concatenate((o1,o2,o3,o4,o5))
+
+obstacle = np.asarray(pp)
 
 xRange = 50
 yRange = 50
-zRange = 80
+zRange = 40
 
-q_init = Node(0,0,0)
-q_goal = Node(-30,30,1)
+q_init = Node(-47,-47,3)
+q_goal = Node(20,45,1)
 
 rrt_path = RRT(obstacle,q_init,q_goal,xRange,yRange,zRange)
 path = rrt_path.main()
@@ -83,4 +88,4 @@ def feedbackCallback(feedback):
 if __name__ == '__main__':
 	rospy.init_node('sendpath_node',anonymous=True)
         rospy.Subscriber("/iris/feedback", Feedback, feedbackCallback)
-        sendPoint()
+        # sendPoint()

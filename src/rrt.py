@@ -22,9 +22,10 @@ class RRT(object):
         self.q_init = q_init
         self.q_init.parent = None
         self.q_goal = q_goal
-        self.delta_q = 8.0
+        self.delta_q = 1.0
         self.points = []
         self.path = []
+        self.optimal = []
         self.checkNum = 0.1
         self.Obstacles = obstacle
         p = index.Property()
@@ -106,6 +107,7 @@ class RRT(object):
 
     def plot(self):
         plotly.tools.set_credentials_file(username='yuchnw', api_key='U4zDLjU3ftIprgEzyXTz')
+        # Plot initial andg goal points
         trace1 = go.Scatter3d(
             x=[self.q_init.x,self.q_goal.x],
             y=[self.q_init.y,self.q_goal.y],
@@ -118,6 +120,7 @@ class RRT(object):
             )
         )
         data = [trace1]
+        # Plot all rrt trees
         for k in range(len(self.points)-1):
             trace = go.Scatter3d(
                 x = [self.points[k+1].x,self.points[k+1].parent.x],
@@ -130,6 +133,7 @@ class RRT(object):
                 )
             )
             data.append(trace)
+        # Plot feasible path
         for j in range(len(self.path)-1):
             path = go.Scatter3d(
                 x = [self.path[j].x,self.path[j+1].x],
@@ -142,6 +146,20 @@ class RRT(object):
                 )
             )
             data.append(path)
+        # Plot optimized path
+        for m in range(len(self.optimal)-1):
+            final = go.Scatter3d(
+                x = [self.optimal[m].x,self.optimal[m+1].x],
+                y = [self.optimal[m].y,self.optimal[m+1].y],
+                z = [self.optimal[m].z,self.optimal[m+1].z],
+                mode = 'lines',
+                line = dict(
+                    color='blue',
+                    width = 5
+                )
+            )
+            data.append(final)
+        # Plot obstacles
         for O in self.Obstacles:
             obs = go.Mesh3d(
                 x=[O[0], O[0], O[3], O[3], O[0], O[0], O[3], O[3]],
@@ -164,7 +182,24 @@ class RRT(object):
             showlegend = False
         )
         fig = go.Figure(data=data,layout=layout)
-        plotly.plotly.plot(fig, filename='real_gazebo_map',auto_open=True)
+        plotly.plotly.plot(fig, filename='complex_gazebo_map',auto_open=False)
+
+    def getOptimal(self):
+        self.optimal = self.path[:]
+        for i in range(100):
+            minLength = len(self.optimal)
+            pick1 = random.randint(1,minLength-1)
+            pick2 = random.randint(1,minLength-1)
+            if (pick1 != pick2) and (self.check_line(self.optimal[pick1],self.optimal[pick2])):
+                if pick1 > pick2:
+                    # self.optimal[pick2].parent = self.optimal[pick1]
+                    del self.optimal[pick2+1:pick1]
+                elif pick1 < pick2:
+                    # self.optimal[pick1].parent = self.optimal[pick2]
+                    del self.optimal[pick1+1:pick2]
+        return self.optimal
+
+
 
     def main(self):
         while True:
@@ -186,5 +221,7 @@ class RRT(object):
         print(len(self.points))
         self.getPath()
         print(len(self.path))
-        # self.plot()
-        return self.path
+        self.getOptimal()
+        print(len(self.optimal))
+        self.plot()
+        return self.optimal
