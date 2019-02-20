@@ -25,7 +25,8 @@ pp = []
 
 for i in range(8):
         for j in range(8):
-                pp.append([-40+10*i,-40+10*j,0,-35+10*i,-35+10*j,random.randint(10,20)])
+                # pp.append([-40+10*i,-40+10*j,0,-35+10*i,-35+10*j,random.randint(10,20)])
+                pp.append([-40+10*i,-40+10*j,0,-35+10*i,-35+10*j,20])
 
 # obstacle = np.concatenate((o1,o2,o3,o4,o5))
 
@@ -43,7 +44,7 @@ path = rrt_path.main()
 
 path.reverse()
 
-map_current = 1
+map_current = 0
 global reach
 reach = 0
 
@@ -88,4 +89,4 @@ def feedbackCallback(feedback):
 if __name__ == '__main__':
 	rospy.init_node('sendpath_node',anonymous=True)
         rospy.Subscriber("/iris/feedback", Feedback, feedbackCallback)
-        # sendPoint()
+        sendPoint()

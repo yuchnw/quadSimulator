@@ -182,7 +182,7 @@ class RRT(object):
             showlegend = False
         )
         fig = go.Figure(data=data,layout=layout)
-        plotly.plotly.plot(fig, filename='complex_gazebo_map',auto_open=False)
+        plotly.plotly.plot(fig, filename='bars_gazebo_map',auto_open=False)
 
     def getOptimal(self):
         self.optimal = self.path[:]

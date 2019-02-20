@@ -13,7 +13,7 @@ latitude = 0.0
 longitude = 0.0
 altitude = 0.0
 
-current_order = 1
+current_order = 0
 reachFlag = 0
           
 def setArm():
@@ -64,8 +64,8 @@ def setLocation():
         goalPos = PoseStamped()
         feedback = Feedback()
 
-        goalPos.pose.position.x = next_x
-        goalPos.pose.position.y = next_y
+        goalPos.pose.position.x = next_x + 47
+        goalPos.pose.position.y = next_y + 47
         goalPos.pose.position.z = next_z
         goalPos.header.stamp = rospy.Time.now()
         goalPos.header.frame_id = 'base_link'
@@ -76,7 +76,7 @@ def setLocation():
         locPub.publish(goalPos)
         setOffboard()
 
-        if abs(x-goalPos.pose.position.x)<0.2 and abs(y-goalPos.pose.position.y)<0.2 and abs(z-goalPos.pose.position.z)<0.2:
+        if abs(x-goalPos.pose.position.x)<1 and abs(y-goalPos.pose.position.y)<1 and abs(z-goalPos.pose.position.z)<1:
             # map_current==current_order and
             print "Reach target"
             if reachFlag == 0:
