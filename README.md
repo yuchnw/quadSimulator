@@ -26,12 +26,12 @@ ROS can be used with PX4 and the Gazebo simulator. As the picture below indicate
 
 [Here](https://plot.ly/~yuchnw/5/#/) is the link to the 3D RRT path planning result generated using Plotly library. Currently I am using a simple Gazebo world map with a few buildings and convert them into block obstacles. The overview of the result is shown below:
 
-![Gazebo](img/world.png)
-![RRT](img/rrt.png)
+![Gazebo](img/bars-gazebo.png)
+![RRT](img/bars-rrt.png)
 
 After getting a feasible path, I smoothed it to reduce the number of waypoints. Generally, since the feasible path has been generated from the RRT-grown tree, and it consists of a chain of nodes connections, the optimization process is conducted by randomly picking up two nodes from the feasible path, and trying to connect them directly.
 
-Here is the result of the [Optimized Path](https://plot.ly/~yuchnw/9/#/). It takes a more complicated obstacle environment and applies the RRT algorithm. The feasible path has 102 waypoints and the number was reduced to 6 after optimization.
+Here is the result of the [Optimized Path](https://plot.ly/~yuchnw/11/#/). It takes a more complicated obstacle environment and applies the RRT algorithm. The feasible path has 102 waypoints and the number was reduced to 8 after optimization.
 
 ### Pilot
 `setMode.py` is to control the flying mode of the quad. For now it can **arm**, **disarm**, **takeoff**, **land** the quadcopter and return its geographic coordinates.
