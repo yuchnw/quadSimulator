@@ -29,7 +29,7 @@ ROS can be used with PX4 and the Gazebo simulator. As the picture below indicate
 ![Gazebo](img/bars-gazebo.png)
 ![RRT](img/bars-rrt.png)
 
-After getting a feasible path, I smoothed it to reduce the number of waypoints. Generally, since the feasible path has been generated from the RRT-grown tree, and it consists of a chain of nodes connections, the optimization process is conducted by randomly picking up two nodes from the feasible path, and trying to connect them directly.
+After getting a feasible path(*the green one*), I smoothed it to reduce the number of waypoints(*the blue one*). Generally, since the feasible path has been generated from the RRT-grown tree, and it consists of a chain of nodes connections, the optimization process is conducted by randomly picking up two nodes from the feasible path, and trying to connect them directly.
 
 Here is the result of the [Optimized Path](https://plot.ly/~yuchnw/11/#/). It takes a more complicated obstacle environment and applies the RRT algorithm. The feasible path has 102 waypoints and the number was reduced to 8 after optimization.
 
