@@ -76,7 +76,7 @@ def setLocation():
         locPub.publish(goalPos)
         setOffboard()
 
-        if abs(x-goalPos.pose.position.x)<1 and abs(y-goalPos.pose.position.y)<1 and abs(z-goalPos.pose.position.z)<1:
+        if abs(x-goalPos.pose.position.x)<1.5 and abs(y-goalPos.pose.position.y)<1.5 and abs(z-goalPos.pose.position.z)<1.5:
             # map_current==current_order and
             print "Reach target"
             if reachFlag == 0:
