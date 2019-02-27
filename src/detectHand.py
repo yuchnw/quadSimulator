@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import String
 
-def draw_hand_rect(self, frame):  
+def drawRectangle(self, frame):  
     rows,cols,_ = frame.shape
 
     self.hand_row_nw = np.array([6*rows/20,6*rows/20,6*rows/20,10*rows/20,10*rows/20,10*rows/20,14*rows/20,14*rows/20,14*rows/20])
@@ -30,7 +30,7 @@ def draw_hand_rect(self, frame):
         frame_final = np.vstack([black, frame])
         return frame_final
 
-def set_hand_hist(self, frame):  
+def handHistogram(self, frame):  
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     roi = np.zeros([90,10,3], dtype=hsv.dtype)
 
@@ -41,7 +41,7 @@ def set_hand_hist(self, frame):
     self.hand_hist = cv2.calcHist([roi],[0, 1], None, [180, 256], [0, 180, 0, 256])
     cv2.normalize(self.hand_hist, self.hand_hist, 0, 255, cv2.NORM_MINMAX)
 
-def apply_hist_mask(frame, hist):  
+def histogramMask(frame, hist):  
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     dst = cv2.calcBackProject([hsv], [0,1], hist, [0,180,0,256], 1)
 
@@ -56,7 +56,7 @@ def apply_hist_mask(frame, hist):
     res = cv2.bitwise_and(frame, thresh)
     return res
 
-def max_contour(frame):
+def maxContour(frame):
     max_i = 0
     max_area = 0
 
@@ -76,6 +76,15 @@ def max_contour(frame):
 
 if __name__ == '__main__':
     capture = cv2.VideoCapture(0)
+    height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
     while(capture.isOpened()):
         ret, frame_raw = capture.read()
+        while not ret:
+            ret,frame_raw = capture.read()
         frame_raw = cv2.flip(frame_raw,1)
+        frame = frame_raw[:int(height),:int(width)]
+        print("!")
+        cv2.imshow('frame', frame_raw)
+    capture.release()
+    cv2.destroyAllWindows()
