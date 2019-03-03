@@ -3,7 +3,6 @@ import rospy
 import numpy as np
 from std_msgs.msg import String
 import sys
-import numpy 
 from std_msgs.msg import String
 import roslib
 import cv2
@@ -23,6 +22,8 @@ class DetectHand:
         self.set_hist = False
         self.defects = None
         self.centroid = None
+        self.path = []
+        self.start = False
 
     def drawRectangle(self, frame):  
         rows,cols,_ = frame.shape
@@ -74,7 +75,6 @@ class DetectHand:
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         ret,thresh = cv2.threshold(gray, 0, 255, 0)
-        # contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         _,contours,_= cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)	
         
         for i in range(len(contours)):
@@ -115,14 +115,15 @@ class DetectHand:
             if maxDistanceIndex < len(shape):
                 far_defect = shape[maxDistanceIndex]
                 far_point = tuple(contour[far_defect][0])
-                cv2.circle(frame, far_point, 5, [0, 0, 255], -1)
+                cv2.circle(frame, far_point, 5, [255, 0, 0], -1)
                 return far_point
             else:
                 return None
         
 
     def main(self):
-        capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture('/dev/video2')
+        # capture = cv2.VideoCapture(0)
         height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
         width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
         while(capture.isOpened()):
@@ -138,6 +139,20 @@ class DetectHand:
                 frame = self.histogramMask(frame,self.hand_hist)
                 contour = self.maxContour(frame)
                 farthest = self.getCentroidandFingertip(contour,frame)
+                if self.start == False:
+                    self.path.append(farthest)
+                    self.start = True
+                else:
+                    dx = self.path[-1][0] - farthest[0]
+                    dy = self.path[-1][1] - farthest[1]
+                    dist = np.sqrt(dx*dx + dy*dy)
+                    if dist < 50:
+                        self.path.append(farthest)
+                if len(self.path) > 20:
+                    self.path.pop(0)
+                if self.path is not None:
+                    for i in range(len(self.path)-1):
+                        cv2.circle(frame, self.path[i], 4, [0, 0, 255], -1)
             else:
                 frame = self.drawRectangle(frame)
             
