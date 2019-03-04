@@ -3,13 +3,10 @@ import rospy
 import numpy as np
 from std_msgs.msg import String
 import sys
-from std_msgs.msg import String
-import roslib
+from geometry_msgs.msg import PoseStamped
 import cv2
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Vector3
-from std_msgs.msg import String
 
 class DetectHand:
 
@@ -84,7 +81,9 @@ class DetectHand:
                 max_area = area
                 max_i = i
         
-        contour = contours[max_i]        
+        contour = contours[max_i]
+        cv2.drawContours(frame,[contour],0,(255,0,0),2)
+        # res = cv2.bitwise_and(frame, frame, mask = contour)
         return contour
     
     def getCentroidandFingertip(self,contour,frame):
@@ -97,7 +96,6 @@ class DetectHand:
             cx = int(moments['m10']/moments['m00'])
             cy = int(moments['m01']/moments['m00'])
             self.centroid = cx,cy
-            # print(centroid)
             cv2.circle(frame, self.centroid, 5, [255, 0, 255], -1)
             
         if self.centroid is not None and self.defects is not None:
@@ -122,6 +120,10 @@ class DetectHand:
         
 
     def main(self):
+        hand_publisher = rospy.Publisher('/iris/hand', PoseStamped, queue_size=10)
+        # loop_rate = rospy.Rate(30)
+
+        handPos = PoseStamped()
         capture = cv2.VideoCapture('/dev/video2')
         # capture = cv2.VideoCapture(0)
         height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -133,7 +135,6 @@ class DetectHand:
             frame_raw = cv2.flip(frame_raw,1)
             frame = frame_raw[:int(height),:int(width)]
             if cv2.waitKey(1) == ord('z') & 0xFF:
-            #     if self.set_hist == False:
                 self.handHistogram(frame)
             if self.set_hist == True:
                 frame = self.histogramMask(frame,self.hand_hist)
@@ -146,8 +147,10 @@ class DetectHand:
                     dx = self.path[-1][0] - farthest[0]
                     dy = self.path[-1][1] - farthest[1]
                     dist = np.sqrt(dx*dx + dy*dy)
-                    if dist < 50:
+                    if dist > 5 and dist < 50:
                         self.path.append(farthest)
+                        handPos.pose.position.x = farthest[0]/640*100 -50
+                        handPos.pose.position.x = farthest[1]/480*100 -50
                 if len(self.path) > 20:
                     self.path.pop(0)
                 if self.path is not None:
@@ -157,7 +160,7 @@ class DetectHand:
                 frame = self.drawRectangle(frame)
             
             # frame = np.vstack([hand_frame, frame])
-
+            hand_publisher.publish(handPos)
             cv2.imshow('frame',frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -165,4 +168,5 @@ class DetectHand:
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+    rospy.init_node('detectHand_node',anonymous=True)
     DetectHand().main()

@@ -91,6 +91,10 @@ def setLocation():
         feedbackPub.publish(feedback)
         loop_rate.sleep()
 
+def setHandTrack():
+    return
+
+
 def setOffboard():
     rospy.wait_for_service('/mavros/set_mode')
     try:
@@ -135,7 +139,8 @@ def userInput():
         print "2: Set mode to DISARM"
         print "3: Set mode to TAKEOFF"
         print "4: Set mode to LAND"
-        print "5: Set mode to TARGET"
+        print "5: Set mode to AVOID OBSTACLE"
+        print "6: Set mode to HAND"
         print "x: Print GPS info"
         print "c: Exit"
         enter = raw_input("Enter your input: ")
@@ -149,6 +154,8 @@ def userInput():
             setLand()
         elif(enter=='5'):
             setLocation()
+        elif(enter=='6'):
+            setHandTrack()
         elif(enter=='x'):
             global latitude
             global longitude
