@@ -92,6 +92,36 @@ def setLocation():
         loop_rate.sleep()
 
 def setHandTrack():
+    locPub = rospy.Publisher('/mavros/setpoint_position/local',PoseStamped,queue_size=10)
+    global hand
+    loop_rate = rospy.Rate(30)
+    global x,y,z,next_x,next_y,next_z, reachFlag
+    while not rospy.is_shutdown():
+
+        goalPos = PoseStamped()
+
+        goalPos.pose.position.x = hand.pose.position.x + 47
+        goalPos.pose.position.y = hand.pose.position.y + 47
+        goalPos.pose.position.z = hand.pose.position.z + 47
+        goalPos.header.stamp = rospy.Time.now()
+        goalPos.header.frame_id = 'base_link'
+
+        locPub.publish(goalPos)
+        setOffboard()
+
+        # if abs(x-goalPos.pose.position.x)<1.5 and abs(y-goalPos.pose.position.y)<1.5 and abs(z-goalPos.pose.position.z)<1.5:
+        #     # map_current==current_order and
+        #     print "Reach target"
+        #     if reachFlag == 0:
+        #         current_order = current_order + 1
+        #         reachFlag = 1
+        #     reachFlag = 1
+        # # elif  abs(x-goalPos.pose.position.x)>=0.2 or abs(y-goalPos.pose.position.y)>=0.2 or abs(z-goalPos.pose.position.z)>=0.2:
+        # else:
+        #     reachFlag = 0
+        
+        # feedbackPub.publish(feedback)
+        loop_rate.sleep()
     return
 
 
@@ -131,6 +161,10 @@ def progressCallback(progress):
     global map_current,path_length
     map_current = progress.map_current
     path_length = progress.total_length
+
+def handPosCallback(handPos):
+    global hand
+    hand = handPos
     
 def userInput():
     enter ='1'
@@ -181,6 +215,7 @@ if __name__ == '__main__':
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, localPositionCallback)
     rospy.Subscriber("/iris/next_point", PoseStamped, nextPointCallback)
     rospy.Subscriber("/iris/progress", Progress, progressCallback)
+    rospy.Subscriber("/iris/hand", PoseStamped, handPosCallback)
 
     userInput()
     # move()

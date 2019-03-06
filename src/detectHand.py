@@ -21,6 +21,7 @@ class DetectHand:
         self.centroid = None
         self.path = []
         self.start = False
+        self.ok = False
 
     def drawRectangle(self, frame):  
         rows,cols,_ = frame.shape
@@ -113,7 +114,7 @@ class DetectHand:
             if maxDistanceIndex < len(shape):
                 far_defect = shape[maxDistanceIndex]
                 far_point = tuple(contour[far_defect][0])
-                cv2.circle(frame, far_point, 5, [255, 0, 0], -1)
+                cv2.circle(frame, far_point, 5, [0, 0, 255], -1)
                 return far_point
             else:
                 return None
@@ -124,10 +125,12 @@ class DetectHand:
         # loop_rate = rospy.Rate(30)
 
         handPos = PoseStamped()
-        capture = cv2.VideoCapture('/dev/video2')
-        # capture = cv2.VideoCapture(0)
+        # capture = cv2.VideoCapture('/dev/video2')
+        capture = cv2.VideoCapture(0)
         height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
         width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        loop_rate = rospy.Rate(30)
+        # while not rospy.is_shutdown():
         while(capture.isOpened()):
             ret, frame_raw = capture.read()
             while not ret:
@@ -136,34 +139,41 @@ class DetectHand:
             frame = frame_raw[:int(height),:int(width)]
             if cv2.waitKey(1) == ord('z') & 0xFF:
                 self.handHistogram(frame)
+            if cv2.waitKey(1) == ord('a') & 0xFF:
+                self.ok = True
             if self.set_hist == True:
                 frame = self.histogramMask(frame,self.hand_hist)
                 contour = self.maxContour(frame)
+                # cv2.imshow('contour',contour)
                 farthest = self.getCentroidandFingertip(contour,frame)
-                if self.start == False:
-                    self.path.append(farthest)
-                    self.start = True
-                else:
-                    dx = self.path[-1][0] - farthest[0]
-                    dy = self.path[-1][1] - farthest[1]
-                    dist = np.sqrt(dx*dx + dy*dy)
-                    if dist > 5 and dist < 50:
+                if self.ok == True:
+                    if self.start == False:
                         self.path.append(farthest)
-                        handPos.pose.position.x = farthest[0]/640*100 -50
-                        handPos.pose.position.x = farthest[1]/480*100 -50
-                if len(self.path) > 20:
-                    self.path.pop(0)
-                if self.path is not None:
-                    for i in range(len(self.path)-1):
-                        cv2.circle(frame, self.path[i], 4, [0, 0, 255], -1)
-            else:
+                        self.start = True
+                    else:
+                        dx = self.path[-1][0] - farthest[0]
+                        dy = self.path[-1][1] - farthest[1]
+                        dist = np.sqrt(dx*dx + dy*dy)
+                        if dist > 10 and dist < 50:
+                            self.path.append(farthest)
+                            handPos.pose.position.x = farthest[0]/640.0*100 -50
+                            handPos.pose.position.y = farthest[1]/480.0*100 -50
+                            handPos.pose.position.z = 10
+                    if len(self.path) > 20:
+                        self.path.pop(0)
+                    if self.path is not None:
+                        for i in range(len(self.path)-1):
+                            cv2.circle(frame, self.path[i], 4, [0, 0, 255], -1)
+            if self.ok == False:
                 frame = self.drawRectangle(frame)
             
             # frame = np.vstack([hand_frame, frame])
             hand_publisher.publish(handPos)
             cv2.imshow('frame',frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                print("stop")
                 break
+            loop_rate.sleep()
         capture.release()
         cv2.destroyAllWindows()
 
