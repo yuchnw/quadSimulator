@@ -23,6 +23,11 @@ class DetectHand:
         self.path = []
         self.start = False
         self.ok = False
+        self.prevAlt = 3
+        self.x = 0
+        self.y = 0
+        self.z = 3
+        self.farthest = None
 
     def drawRectangle(self, frame):  
         rows,cols,_ = frame.shape
@@ -119,14 +124,6 @@ class DetectHand:
                 return far_point
             else:
                 return None
-        
-    # def imageCallback(self,image):
-    #     from cv_bridge import CvBridge, CvBridgeError
-    #     bridge = CvBridge()
-    #     cv_image = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
-    #     (rows,cols,channels) = cv_image.shape
-    #     self.operate(cv_image)
-    #     return
 
     def depthCallback(self,image):
         from cv_bridge import CvBridge, CvBridgeError
@@ -154,19 +151,65 @@ class DetectHand:
         cv2.waitKey(3)
         return
 
+    def getDepth1(self,rgb,depth):
+        from cv_bridge import CvBridge, CvBridgeError
+        bridge = CvBridge()
+        try:
+            image = bridge.imgmsg_to_cv2(rgb, "bgr8")
+            depth_image = bridge.imgmsg_to_cv2(depth, "32FC1")
+        except CvBridgeError, e:
+            print e
+        depth_array = np.array(depth_image, dtype=np.float32)
+        # img = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
+        (rows,cols,channels) = image.shape
+        # Z = img.reshape((-1,3))
+
+        # convert to np.float32
+        Z = np.float32(image)
+
+        # define criteria, number of clusters(K) and apply kmeans()
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        K = 8
+        ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+
+        # Now convert back into uint8, and make original image
+        center = np.uint8(center)
+        res = center[label.flatten()]
+        res2 = res.reshape((image.shape))
+
+        cv2.imshow('res2',res2)
+        cv2.waitKey(3)
+        cv2.destroyAllWindows()
+    
+    def imageCallback(self,image):
+        from cv_bridge import CvBridge, CvBridgeError
+        bridge = CvBridge()
+        cv_image = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
+        new_image = cv2.resize(cv_image,(640,480))
+        cv2.imshow("iris",new_image)
+
     def main(self):
-    #     rospy.Subscriber("/camera/rgb/image_color", Image, self.imageCallback)
+        # rospy.Subscriber("/iris/camera_red_iris/image_raw", Image, self.imageCallback)
     #     rospy.Subscriber("/camera/depth/image_raw", Image, self.depthCallback)
         image_sub = message_filters.Subscriber("/camera/rgb/image_color", Image)
         depth_sub = message_filters.Subscriber("/camera/depth/image_raw", Image)
+        # depth_sub = message_filters.Subscriber("/camera/depth_registered/image_raw", Image)
         both = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub], 10, 0.5)
         both.registerCallback(self.getDepth)
-        rospy.spin()
+        loop_rate = rospy.Rate(30)
+        while not rospy.is_shutdown():
+            hand_publisher = rospy.Publisher('/iris/hand', PoseStamped, queue_size=10)
+            handPos = PoseStamped()
+            handPos.pose.position.x = self.x
+            handPos.pose.position.y = self.y
+            handPos.pose.position.z = self.z
+            hand_publisher.publish(handPos)
+
+            loop_rate.sleep()
+            # rospy.spin()
 
     def operate(self,cv_image,depth_array):
-        hand_publisher = rospy.Publisher('/iris/hand', PoseStamped, queue_size=10)
-        handPos = PoseStamped()
-        loop_rate = rospy.Rate(50)
+        
         if cv2.waitKey(1) == ord('z') & 0xFF:
             self.handHistogram(cv_image)
         if cv2.waitKey(1) == ord('a') & 0xFF:
@@ -174,22 +217,27 @@ class DetectHand:
         if self.set_hist == True:
             cv_image = self.histogramMask(cv_image,self.hand_hist)
             contour = self.maxContour(cv_image)
-            farthest = self.getCentroidandFingertip(contour,cv_image)
+            self.farthest = self.getCentroidandFingertip(contour,cv_image)
             if self.ok == True:
                 if self.start == False:
-                    self.path.append(farthest)
+                    self.path.append(self.farthest)
                     self.start = True
                 else:
-                    dx = self.path[-1][0] - farthest[0]
-                    dy = self.path[-1][1] - farthest[1]
+                    dx = self.path[-1][0] - self.farthest[0]
+                    dy = self.path[-1][1] - self.farthest[1]
                     dist = np.sqrt(dx*dx + dy*dy)
                     if dist > 10 and dist < 50:
-                        # print(farthest[1])
-                        print(depth_array[farthest[1]][farthest[0]])
-                        self.path.append(farthest)
-                        handPos.pose.position.x = farthest[0]/640.0*100 -50
-                        handPos.pose.position.y = 50 - farthest[1]/480.0*100
-                        handPos.pose.position.z = 10
+                        # print(self.farthest[1])
+                        height = depth_array[self.centroid[1]][self.centroid[0]]
+                        print(height)
+                        self.path.append(self.farthest)
+                        self.x = self.farthest[0]/640.0*100 -50
+                        self.y = 70 - self.farthest[1]/480.0*120
+                        if height == 0.0 or height > 1000.0:
+                            self.z = self.prevAlt
+                        else:
+                            self.prevAlt = height/100.0
+                            self.z = self.prevAlt
                 if len(self.path) > 20:
                     self.path.pop(0)
                 if self.path is not None:
@@ -197,9 +245,9 @@ class DetectHand:
                         cv2.circle(cv_image, self.path[i], 4, [0, 0, 255], -1)
         if self.ok == False:
             cv_image = self.drawRectangle(cv_image)
-        hand_publisher.publish(handPos)
+        
         cv2.imshow('frame',cv_image)
-        loop_rate.sleep()
+        
         return
 
 if __name__ == '__main__':

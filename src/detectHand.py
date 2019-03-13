@@ -118,6 +118,77 @@ class DetectHand:
                 return far_point
             else:
                 return None
+
+    def cluster(self):
+        capture = cv2.VideoCapture(0)
+        height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        while(capture.isOpened()):
+            ret, frame_raw = capture.read()
+            while not ret:
+                ret,frame_raw = capture.read()
+            frame_raw = cv2.flip(frame_raw,1)
+            frame = frame_raw[:int(height),:int(width)]
+            # print(1)
+            # Z = frame.reshape((-1,3))
+            Z = np.float32(frame)
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+            K = 8
+            ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+            center = np.uint8(center)
+            res = center[label.flatten()]
+            # res2 = res.reshape((img.shape))
+
+            cv2.imshow('res2',res)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                print("stop")
+                break
+        capture.release()
+        cv2.destroyAllWindows()
+        # img = cv2.imread('/img/1.jpg')
+        # Z = img.reshape((-1,3))
+
+        # # convert to np.float32
+        # Z = np.float32(Z)
+
+        # # define criteria, number of clusters(K) and apply kmeans()
+        # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        # K = 8
+        # ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+
+        # # Now convert back into uint8, and make original image
+        # center = np.uint8(center)
+        # res = center[label.flatten()]
+        # res2 = res.reshape((img.shape))
+
+        # cv2.imshow('res2',res2)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+    def imageCallback(self,image):
+        from cv_bridge import CvBridge, CvBridgeError
+        bridge = CvBridge()
+        global cv_image
+        img = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
+        (rows,cols,channels) = img.shape
+        Z = img.reshape((-1,3))
+
+        # convert to np.float32
+        Z = np.float32(Z)
+
+        # define criteria, number of clusters(K) and apply kmeans()
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        K = 8
+        ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+
+        # Now convert back into uint8, and make original image
+        center = np.uint8(center)
+        res = center[label.flatten()]
+        res2 = res.reshape((img.shape))
+
+        cv2.imshow('res2',res2)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         
 
     def main(self):
@@ -178,4 +249,5 @@ class DetectHand:
 
 if __name__ == '__main__':
     rospy.init_node('detectHand_node',anonymous=True)
-    DetectHand().main()
+    # rospy.Subscriber("/camera/rgb/image_color", Image, DetectHand.imageCallback)
+    DetectHand().cluster()

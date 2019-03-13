@@ -36,7 +36,7 @@ def setTakeoff():
     rospy.wait_for_service('/mavros/cmd/takeoff')
     try:
         takeoffService = rospy.ServiceProxy('/mavros/cmd/takeoff', mavros_msgs.srv.CommandTOL) 
-        takeoffService(altitude = 10, latitude = 47.3977420, longitude = 8.5455936, min_pitch = 0, yaw = 0)
+        takeoffService(altitude = 3, latitude = 47.3977420, longitude = 8.5455936, min_pitch = 0, yaw = 0)
         # takeoffService(altitude = 50, latitude = latitude, longitude = longitude, min_pitch = 0, yaw = 0)
     except rospy.ServiceException, e:
         print "Service takeoff call failed: %s"%e
@@ -102,7 +102,7 @@ def setHandTrack():
 
         goalPos.pose.position.x = hand.pose.position.x + 47
         goalPos.pose.position.y = hand.pose.position.y + 47
-        goalPos.pose.position.z = hand.pose.position.z + 47
+        goalPos.pose.position.z = hand.pose.position.z
         goalPos.header.stamp = rospy.Time.now()
         goalPos.header.frame_id = 'base_link'
 
