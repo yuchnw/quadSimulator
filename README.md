@@ -61,7 +61,7 @@ The flight controller needs a stream of setpoint messages before the commander a
 
 ## Installation
 ### Prerequisite
-The system should have ROS(*Indigo, Kinetic, Lunar or Melodic*), relative workspace and Gazebo(*8 or later*) installed.
+The system should have ROS(*Indigo, Kinetic, Lunar or Melodic*), relative workspace and Gazebo(*8 or later*) installed. The hardware device required is an RGBD camera. I use ASUS Xtion Pro.
 
 ### Install PX4 Firmware
 Fork from PX4 [Git repo](https://github.com/PX4/Firmware) and clone it to local working directory. Build the platform with following commands:
@@ -102,4 +102,44 @@ source devel/setup.bash
 ```
 :bangbang: **MAVROS only support `catkin build` instead of `catkin_make` otherwise it will raise an error saying "Workspace contains non-catkin packages".** :bangbang:
 
-*TO BE CONTINUE*
+### Install OpenNi
+This package contains launch files for using OpenNI-compliant devices such as the ASUS Xtion Pro in ROS. It creates a nodelet graph to transform raw data from the device driver into point clouds, disparity images, and other products suitable for processing and visualization.
+
+```bash
+# 1. To start OpenNi:
+roslaunch openni_launch openni.launch
+
+# 2. To visualize in Rviz:
+rosrun rviz rviz
+
+# 3. To view the color image from the RGB camera outside of rviz:
+rosrun image_view image_view image:=/camera/rgb/image_color
+
+# 4. To view the depth image from the D-cam:
+rosrun image_view image_view image:=/camera/depth/image_raw
+```
+
+## Run
+To execute the program, following the steps below:
+```bash
+roscore
+roslaunch px4 mavros_posix_sitl.launch
+
+# For autonomous path planning
+rosrun iris_sim map.py # Generate path using RRT
+rosrun iris_sim setMode.py
+# First set Mode 1 to arm the quadcopter
+# Then set Mode 5 to start flying along the path
+
+# For hand-gesture tracking
+roslaunch openni_launch openni.launch
+rosrun iris_sim detectRGBD.py # Launch hand detection script
+# Put hand in the green rectangles and press 'z' to apply histogram mask
+# When the detection succeeds, press 'a' to start tracking fingertip
+rosrun iris_sim setMode.py
+# First set Mode 1 to arm the quadcopter
+# Then set Mode 6 to follow the fingertip trajectory
+```
+
+## Strench Goal
+The further step would be deploy the whole program to a real quadcopter and test it. Stay tuned.

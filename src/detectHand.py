@@ -34,7 +34,7 @@ class DetectHand:
 
         size = self.hand_row_nw.size
         for i in xrange(size):
-            cv2.rectangle(frame,(self.hand_col_nw[i],self.hand_row_nw[i]),(self.hand_col_se[i],self.hand_row_se[i]),(0,255,0),1)
+            # cv2.rectangle(frame,(self.hand_col_nw[i],self.hand_row_nw[i]),(self.hand_col_se[i],self.hand_row_se[i]),(0,255,0),1)
             black = np.zeros(frame.shape, dtype=frame.dtype)
             frame_final = np.vstack([black, frame])
         return frame_final
@@ -250,4 +250,4 @@ class DetectHand:
 if __name__ == '__main__':
     rospy.init_node('detectHand_node',anonymous=True)
     # rospy.Subscriber("/camera/rgb/image_color", Image, DetectHand.imageCallback)
-    DetectHand().cluster()
+    DetectHand().main()

@@ -40,7 +40,7 @@ class DetectHand:
 
         size = self.hand_row_nw.size
         for i in xrange(size):
-            cv2.rectangle(frame,(self.hand_col_nw[i],self.hand_row_nw[i]),(self.hand_col_se[i],self.hand_row_se[i]),(0,255,0),1)
+            # cv2.rectangle(frame,(self.hand_col_nw[i],self.hand_row_nw[i]),(self.hand_col_se[i],self.hand_row_se[i]),(0,255,0),1)
             black = np.zeros(frame.shape, dtype=frame.dtype)
             frame_final = np.vstack([black, frame])
         return frame_final
@@ -150,36 +150,6 @@ class DetectHand:
         # cv2.imshow('Body Recognition', depth_array)
         cv2.waitKey(3)
         return
-
-    def getDepth1(self,rgb,depth):
-        from cv_bridge import CvBridge, CvBridgeError
-        bridge = CvBridge()
-        try:
-            image = bridge.imgmsg_to_cv2(rgb, "bgr8")
-            depth_image = bridge.imgmsg_to_cv2(depth, "32FC1")
-        except CvBridgeError, e:
-            print e
-        depth_array = np.array(depth_image, dtype=np.float32)
-        # img = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
-        (rows,cols,channels) = image.shape
-        # Z = img.reshape((-1,3))
-
-        # convert to np.float32
-        Z = np.float32(image)
-
-        # define criteria, number of clusters(K) and apply kmeans()
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        K = 8
-        ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
-
-        # Now convert back into uint8, and make original image
-        center = np.uint8(center)
-        res = center[label.flatten()]
-        res2 = res.reshape((image.shape))
-
-        cv2.imshow('res2',res2)
-        cv2.waitKey(3)
-        cv2.destroyAllWindows()
     
     def imageCallback(self,image):
         from cv_bridge import CvBridge, CvBridgeError
