@@ -8,7 +8,7 @@
 This main goal of this project is to simulate the behavior of an Iris quadcopter based on PX4 firmware in a Gazebo world. The quadcopter is supposed to accomplish an 3D motion planning. At first, the quad will be given a map containing all the obstacles and a destination point. It will use RRT algorithm to generate an optimized path to reach the goal and avoid collisions. The whole motion of the drone should be smooth, safe and robust.
 Other than that, the quad could also be manipulated by hand-gesture to navigate in complex aerial space.
 
-![Demo](/img/hand_nav.gif)
+![Demo](https://github.com/yuchnw/quadSimulator/raw/master/img/hand_nav.gif)
 
 ## Background
 ### PX4
